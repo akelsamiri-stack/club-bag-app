@@ -1,0 +1,9 @@
+{
+  "appId": "com.twoandones.clubbag",
+  "appName": "Twos & Ones",
+  "webDir": "www",
+  "backgroundColor": "#0A0E15",
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

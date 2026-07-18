@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0A0E15">
+<title>Two &amp; Ones — Club Bag</title>
+<style>
+  :root{
+    --ink:#0A0E15; --ink2:#0C121C;
+    --panel:#121A26; --panel2:#0F1622;
+    --edge:#21303F; --edge-soft:#19232F;
+    --bone:#F3EFE7; --slate:#90A0B2; --slate-dim:#5C6A7A;
+    --red:#FF313E; --red-deep:#B01C28;
+    --blue:#1E72E0; --court:#16407A;
+    --ok:#46D18A;
+    --r:16px;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--ink); color:var(--bone);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    overflow:hidden; user-select:none; -webkit-user-select:none;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- wordmark ---------- */
+  .wordmark{font-weight:800;letter-spacing:.04em;font-size:15px;}
+  .wordmark .two{color:var(--red);text-shadow:0 0 14px rgba(255,49,62,.45);}
+  .wordmark .ones{color:var(--blue);text-shadow:0 0 14px rgba(30,114,224,.5);}
+  .wordmark .bolt{color:var(--bone);font-size:12px;margin:0 2px;}
+
+  /* ---------- app frame ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:13px 16px;border-bottom:1px solid var(--edge-soft);background:var(--ink2);
+  }
+  header .sub{font-size:10px;letter-spacing:.16em;color:var(--slate-dim);text-transform:uppercase;font-weight:700;}
+  main{flex:1;position:relative;overflow:hidden;}
+  .tabpane{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto;}
+  .tabpane.active{display:flex;}
+  nav{
+    display:flex;border-top:1px solid var(--edge-soft);background:var(--ink2);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav button{
+    flex:1;background:none;border:none;color:var(--slate-dim);font-size:11px;font-weight:700;
+    letter-spacing:.06em;padding:10px 0 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:center;
+  }
+  nav button .ico{font-size:18px;line-height:1;}
+  nav button.on{color:var(--bone);}
+  nav button.on .ico{filter:drop-shadow(0 0 8px rgba(255,49,62,.6));}
+
+  /* ---------- shared ---------- */
+  .btn{
+    background:linear-gradient(135deg,var(--red),var(--red-deep));color:#fff;border:none;border-radius:14px;
+    font-size:16px;font-weight:800;padding:15px 26px;cursor:pointer;letter-spacing:.02em;
+    transition:transform .08s var(--ease);box-shadow:0 4px 20px rgba(255,49,62,.25);
+  }
+  .btn.blue{background:linear-gradient(135deg,var(--blue),var(--court));box-shadow:0 4px 20px rgba(30,114,224,.3);}
+  .btn:active{transform:scale(.97);}
+  .btn.ghost{background:var(--panel);color:var(--slate);border:1px solid var(--edge);box-shadow:none;font-weight:700;}
+  .card{background:var(--panel);border:1px solid var(--edge-soft);border-radius:var(--r);padding:16px;}
+  .label{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate-dim);font-weight:700;margin-bottom:6px;}
+  input,select{
+    width:100%;background:var(--panel2);border:1px solid var(--edge);border-radius:12px;
+    color:var(--bone);font-size:16px;padding:12px 13px;outline:none;appearance:none;
+  }
+  input:focus,select:focus{border-color:var(--blue);}
+  .seg{display:flex;background:var(--panel2);border:1px solid var(--edge);border-radius:12px;overflow:hidden;}
+  .seg button{flex:1;background:transparent;border:none;color:var(--slate);font-size:14px;font-weight:700;padding:11px 0;cursor:pointer;}
+  .seg button.on{background:var(--bone);color:var(--ink);}
+  .muted{color:var(--slate);font-size:13px;line-height:1.55;}
+  .plug{font-size:12px;color:var(--slate-dim);line-height:1.6;text-align:center;padding:14px;}
+  .plug a{color:var(--blue);font-weight:700;text-decoration:none;}
+
+  /* ================= SCORE ================= */
+  .scr{position:absolute;inset:0;display:none;flex-direction:column;}
+  .scr.active{display:flex;}
+  #scoreSetup{padding:20px;gap:14px;overflow-y:auto;}
+  #scoreSetup .intro{text-align:center;padding:6px 0 2px;}
+  #scoreSetup .intro .big{font-size:22px;font-weight:800;}
+  #scoreSetup .intro .big .r{color:var(--red);} #scoreSetup .intro .big .b{color:var(--blue);}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--edge-soft);gap:8px;}
+  .dots{display:flex;gap:5px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--edge);}
+  .dot.wr{background:var(--red);box-shadow:0 0 6px rgba(255,49,62,.7);}
+  .dot.wb{background:var(--blue);box-shadow:0 0 6px rgba(30,114,224,.7);}
+  .gameno{font-size:11px;letter-spacing:.12em;color:var(--slate-dim);text-transform:uppercase;font-weight:700;}
+  .courts{flex:1;display:flex;flex-direction:column;}
+  @media (orientation:landscape){.courts{flex-direction:row;}}
+  .court{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:background .12s;}
+  .court.p0{background:linear-gradient(180deg,rgba(255,49,62,.09),rgba(255,49,62,.02));}
+  .court.p1{background:linear-gradient(0deg,rgba(30,114,224,.10),rgba(30,114,224,.02));}
+  .court.p0:active{background:rgba(255,49,62,.16);}
+  .court.p1:active{background:rgba(30,114,224,.18);}
+  .court.p0{border-bottom:1px solid var(--edge-soft);}
+  @media (orientation:landscape){.court.p0{border-bottom:none;border-right:1px solid var(--edge-soft);}}
+  .court .pname{font-size:14px;font-weight:700;color:var(--slate);display:flex;align-items:center;gap:7px;}
+  .court .score{font-size:min(22vh,110px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
+  .court.p0 .score{text-shadow:0 0 30px rgba(255,49,62,.35);}
+  .court.p1 .score{text-shadow:0 0 30px rgba(30,114,224,.4);}
+  .court .tap{font-size:10px;color:var(--slate-dim);letter-spacing:.12em;text-transform:uppercase;opacity:.6;}
+  .serve{display:none;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.05em;}
+  .court.p0 .serve{color:var(--red);background:rgba(255,49,62,.12);}
+  .court.p1 .serve{color:var(--blue);background:rgba(30,114,224,.14);}
+  .court.serving .serve{display:inline-flex;}
+  .court.gp .score{color:#fff;}
+  .scorebar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-top:1px solid var(--edge-soft);}
+  .smallbtn{background:var(--panel);border:1px solid var(--edge);color:var(--slate);border-radius:10px;font-size:13px;font-weight:700;padding:8px 15px;cursor:pointer;}
+  .toast{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.95);
+    background:var(--panel2);border:1px solid var(--edge);color:var(--bone);
+    padding:13px 24px;border-radius:16px;font-weight:800;font-size:16px;text-align:center;
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:5;
+    box-shadow:0 10px 40px rgba(0,0,0,.55);
+  }
+  .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .toast .sub{display:block;font-size:11.5px;color:var(--slate);font-weight:600;margin-top:3px;letter-spacing:.06em;}
+  .centerpane{align-items:center;justify-content:center;padding:26px;gap:16px;text-align:center;}
+  .bigmsg{font-size:26px;font-weight:800;line-height:1.25;}
+  .r{color:var(--red);} .b{color:var(--blue);}
+  .chips{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;}
+  .chip{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:6px 12px;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .chip.wr{border-color:var(--red);color:var(--red);}
+  .chip.wb{border-color:var(--blue);color:var(--blue);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+
+  /* ================= GEAR ================= */
+  #gear{padding:18px;gap:14px;}
+  .gearitem{display:flex;align-items:center;gap:12px;}
+  .gearitem .ico{
+    width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:20px;background:var(--panel2);border:1px solid var(--edge);flex-shrink:0;
+  }
+  .gearitem .info{flex:1;min-width:0;}
+  .gearitem .name{font-weight:700;font-size:15px;}
+  .gearitem .meta{font-size:12px;color:var(--slate-dim);margin-top:2px;}
+  .age{font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;letter-spacing:.04em;white-space:nowrap;}
+  .age.ok{color:var(--ok);background:rgba(70,209,138,.12);}
+  .age.mid{color:#E8A33D;background:rgba(232,163,61,.12);}
+  .age.old{color:var(--red);background:rgba(255,49,62,.12);}
+  .nudge{
+    border:1px solid rgba(255,49,62,.35);background:rgba(255,49,62,.06);
+    border-radius:var(--r);padding:13px 15px;font-size:13px;line-height:1.55;color:var(--bone);
+  }
+  .nudge a{color:var(--red);font-weight:800;text-decoration:none;}
+  .addform{display:none;flex-direction:column;gap:11px;}
+  .addform.open{display:flex;}
+  .del{background:none;border:none;color:var(--slate-dim);font-size:16px;cursor:pointer;padding:6px;}
+
+  /* ================= TOOLS ================= */
+  #tools{padding:18px;gap:14px;}
+  .timerrow{display:flex;gap:10px;}
+  .timerbtn{
+    flex:1;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);
+    color:var(--bone);padding:14px 6px;cursor:pointer;text-align:center;
+  }
+  .timerbtn .t{font-size:20px;font-weight:800;}
+  .timerbtn .l{font-size:10.5px;color:var(--slate-dim);letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-top:3px;}
+  .clock{
+    text-align:center;font-size:64px;font-weight:800;font-variant-numeric:tabular-nums;
+    padding:10px 0 2px;display:none;
+  }
+  .clock.show{display:block;}
+  .clock.warn{color:var(--red);text-shadow:0 0 24px rgba(255,49,62,.4);}
+  .clocklabel{text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate-dim);font-weight:700;display:none;}
+  .clocklabel.show{display:block;}
+  .drill{
+    text-align:center;padding:22px 14px;
+  }
+  .drill .callout{font-size:24px;font-weight:800;line-height:1.35;min-height:66px;}
+  .drill .callout .r{color:var(--red);} .drill .callout .b{color:var(--blue);}
+
+  /* ================= RULES ================= */
+  #rules{padding:18px;gap:10px;}
+  .rule{border:1px solid var(--edge-soft);border-radius:var(--r);background:var(--panel);overflow:hidden;}
+  .rule .q{padding:14px 15px;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;}
+  .rule .q .arr{color:var(--slate-dim);transition:transform .2s;}
+  .rule .a{display:none;padding:0 15px 14px;font-size:13.5px;color:var(--slate);line-height:1.6;}
+  .rule.open .a{display:block;}
+  .rule.open .q .arr{transform:rotate(90deg);}
+  .verdict{color:var(--bone);font-weight:700;}
+</style>
+</head>
+<body>
+<div id="splashOverlay" style="position:fixed;inset:0;z-index:999;background:#000 url(splash.jpg) center/cover no-repeat;transition:opacity .6s ease;"></div>
+<script>
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    var o=document.getElementById('splashOverlay');
+    o.style.opacity='0';
+    setTimeout(function(){o.remove();},700);
+  },1500);
+});
+</script>
+
+<header>
+  <div class="wordmark"><span class="two">TWO</span><span class="bolt">⚡</span><span class="ones">ONES</span></div>
+  <div class="sub">Club Bag</div>
+</header>
+
+<main>
+
+  <!-- ================= SCORE TAB ================= -->
+  <div class="tabpane active" id="tab-score">
+
+    <div class="scr active" id="scoreSetup" style="display:flex;">
+      <div class="intro">
+        <div class="big"><span class="r">Red</span> vs <span class="b">Blue</span></div>
+        <div class="muted" style="margin-top:4px;">Pick your side. Tap your half to score.<br>Serves tracked automatically — twos, then ones at deuce.</div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div><div class="label" style="color:var(--red);">Red side</div><input id="n1" placeholder="Player 1" maxlength="14"></div>
+        <div><div class="label" style="color:var(--blue);">Blue side</div><input id="n2" placeholder="Player 2" maxlength="14"></div>
+        <div><div class="label">Match format</div>
+          <div class="seg" id="segBo">
+            <button data-v="3">Best of 3</button>
+            <button data-v="5" class="on">Best of 5</button>
+            <button data-v="7">Best of 7</button>
+          </div>
+        </div>
+        <div><div class="label">First serve</div>
+          <div class="seg" id="segFs">
+            <button data-v="0" class="on" id="fs1">Red</button>
+            <button data-v="1" id="fs2">Blue</button>
+          </div>
+        </div>
+        <button class="btn" id="startBtn">Start match</button>
+      </div>
+      <div id="recentbox"></div>
+    </div>
+
+    <div class="scr" id="scorePlay">
+      <div class="topbar">
+        <div class="dots" id="dots1"></div>
+        <div class="gameno" id="gameno">Game 1</div>
+        <div class="dots" id="dots2"></div>
+      </div>
+      <div class="courts">
+        <div class="court p0" id="c0">
+          <div class="pname"><span id="pn0"></span><span class="serve">⚡ SERVE ×<span id="sv0">2</span></span></div>
+          <div class="score" id="sc0">0</div>
+          <div class="tap">tap to score</div>
+        </div>
+        <div class="court p1" id="c1">
+          <div class="pname"><span id="pn1"></span><span class="serve">⚡ SERVE ×<span id="sv1">2</span></span></div>
+          <div class="score" id="sc1">0</div>
+          <div class="tap">tap to score</div>
+        </div>
+      </div>
+      <div class="scorebar">
+        <button class="smallbtn" id="undoBtn">↩ Undo</button>
+        <div class="wordmark" style="font-size:11px;"><span class="two">TWO</span><span class="bolt">⚡</span><span class="ones">ONES</span></div>
+        <button class="smallbtn" id="endBtn">End</button>
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <div class="scr centerpane" id="scoreBetween">
+      <div class="bigmsg" id="bwMsg"></div>
+      <div class="muted" id="bwScore"></div>
+      <div class="muted" style="color:var(--bone);font-weight:800;">Change ends ⇄</div>
+      <button class="btn blue" id="nextGameBtn">Next game</button>
+    </div>
+
+    <div class="scr centerpane" id="scoreEnd">
+      <div class="bigmsg" id="endMsg"></div>
+      <div class="muted" id="finalGames"></div>
+      <div class="chips" id="chips"></div>
+      <div class="row">
+        <button class="btn" id="rematchBtn">Rematch</button>
+        <button class="btn ghost" id="shareBtn">Share</button>
+        <button class="btn ghost" id="newBtn">New match</button>
+      </div>
+      <div class="plug">Losing more than winning? Maybe it’s the racket.<br>
+        <a href="https://twoandones.com" target="_blank" rel="noopener">Racket Finder → twoandones.com</a></div>
+    </div>
+  </div>
+
+  <!-- ================= GEAR TAB ================= -->
+  <div class="tabpane" id="tab-gear">
+    <div style="padding:18px;display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <div style="font-size:19px;font-weight:800;">My Gear</div>
+        <div class="muted">Log what’s on your racket and when you bought it. Rubbers lose grip long before they look worn — we’ll tell you when it’s time.</div>
+      </div>
+      <div id="nudgebox"></div>
+      <div id="gearlist" style="display:flex;flex-direction:column;gap:9px;"></div>
+      <button class="btn ghost" id="gearAddToggle">+ Add gear</button>
+      <div class="addform card" id="gearForm">
+        <div><div class="label">Type</div>
+          <select id="gType">
+            <option value="fh">Forehand rubber</option>
+            <option value="bh">Backhand rubber</option>
+            <option value="blade">Blade</option>
+            <option value="shoes">Shoes</option>
+            <option value="balls">Balls</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div><div class="label">Name</div><input id="gName" placeholder="e.g. Tenergy 05, 2.1mm" maxlength="40"></div>
+        <div><div class="label">Date bought / glued</div><input id="gDate" type="date"></div>
+        <button class="btn blue" id="gearSave">Save</button>
+      </div>
+      <div class="plug">Everything is saved on your device — no account, no sign-up.<br>Rubbers get a quiet reminder at the 6-month mark.</div>
+    </div>
+  </div>
+
+  <!-- ================= TOOLS TAB ================= -->
+  <div class="tabpane" id="tab-tools">
+    <div style="padding:18px;display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div style="font-size:19px;font-weight:800;">Table-side Tools</div>
+        <div class="muted">The stuff every match and training night needs.</div>
+      </div>
+      <div class="card">
+        <div class="label">Timers</div>
+        <div class="clock" id="clock">1:00</div>
+        <div class="clocklabel" id="clockLabel"></div>
+        <div class="timerrow" style="margin-top:10px;">
+          <button class="timerbtn" data-secs="60" data-name="Timeout"><div class="t">1:00</div><div class="l">Timeout</div></button>
+          <button class="timerbtn" data-secs="120" data-name="Between games"><div class="t">2:00</div><div class="l">Break</div></button>
+          <button class="timerbtn" data-secs="120" data-name="Warm-up"><div class="t">2:00</div><div class="l">Warm-up</div></button>
+        </div>
+        <button class="btn ghost" id="timerStop" style="width:100%;margin-top:10px;display:none;">Stop</button>
+      </div>
+      <div class="card drill">
+        <div class="label">Serve practice — random callout</div>
+        <div class="callout" id="drillOut">Tap for a serve to practise</div>
+        <button class="btn" id="drillBtn" style="margin-top:8px;">Call it ⚡</button>
+      </div>
+      <div class="card">
+        <div class="label">Towel &amp; timeout tracker</div>
+        <div class="muted">Towel break allowed every 6 points. One 60-second timeout per player per match. The Score tab counts points — this is your reminder of the law.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RULES TAB ================= -->
+  <div class="tabpane" id="tab-rules">
+    <div style="padding:18px;display:flex;flex-direction:column;gap:9px;">
+      <div>
+        <div style="font-size:19px;font-weight:800;">Settle It</div>
+        <div class="muted" style="margin-bottom:6px;">The arguments every garage and club match has — settled by the actual rules.</div>
+      </div>
+      <div class="card" style="margin-bottom:6px;">
+        <div class="label">Is that rubber legal? · Official ITTF list, 7 May 2026</div>
+        <input id="larcQ" placeholder="Type the rubber name — e.g. Hurricane 8" autocomplete="off">
+        <div id="larcOut" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>
+        <div class="muted" style="font-size:12px;margin-top:8px;">Also check: ITTF logo + supplier printed on the topsheet, one side black, the other an approved colour (red, green, blue, pink or violet), surface flat and undamaged.</div>
+      </div>
+      <div class="rule"><div class="q">Serve clipped the net and landed in <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">Let — replay the serve.</span> No limit on how many times. If it clips the net and misses the table, it’s your opponent’s point.</div></div>
+      <div class="rule"><div class="q">Ball hit the edge of the table <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">Point stands</span> if it touched the top edge of the playing surface. Hit the <em>side</em> of the table below the edge? No good — point to the other player.</div></div>
+      <div class="rule"><div class="q">How high does the serve toss have to be? <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">At least 16 cm</span> (about a ball can and a half), thrown near-vertically from a flat open palm, from behind the end line and above table height. No serving straight out of the fingers.</div></div>
+      <div class="rule"><div class="q">They touched the table with their free hand <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">Point to you</span> — if it happens during a rally, touching the playing surface with the free hand (or moving the table) loses the point.</div></div>
+      <div class="rule"><div class="q">They hit it before it bounced <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">Point to you.</span> Hitting or being struck by the ball over or moving toward the playing surface before it bounces (obstruction) loses the point.</div></div>
+      <div class="rule"><div class="q">Who serves at deuce? <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">One serve each from 10-10</span>, alternating every point until someone leads by two. Twos, then ones. It’s the whole name of the shop.</div></div>
+      <div class="rule"><div class="q">When do we change ends? <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">After every game</span>, and in the deciding game when the first player reaches 5.</div></div>
+      <div class="rule"><div class="q">Can I put my racket down / wipe sweat? <span class="arr">›</span></div>
+        <div class="a"><span class="verdict">Towel every 6 points</span> (and at change of ends in the last game). Each player also gets one timeout of up to 60 seconds per match.</div></div>
+      <div class="plug">Full laws at ittf.com · Gear questions?<br><a href="https://twoandones.com" target="_blank" rel="noopener">Ask the specialists → twoandones.com</a></div>
+    </div>
+  </div>
+
+</main>
+
+<nav>
+  <button class="on" data-tab="tab-score"><span class="ico">🏓</span>Score</button>
+  <button data-tab="tab-gear"><span class="ico">🎒</span>Gear</button>
+  <button data-tab="tab-tools"><span class="ico">⏱️</span>Tools</button>
+  <button data-tab="tab-rules"><span class="ico">⚖️</span>Rules</button>
+</nav>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+
+  /* ================= STORAGE (on-device, no account) ================= */
+  var store={
+    get:function(k,fb){try{var v=localStorage.getItem(k);return v?JSON.parse(v):fb;}catch(e){return fb;}},
+    set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  };
+
+  /* ================= TABS ================= */
+  document.querySelectorAll('nav button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('nav button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      document.querySelectorAll('.tabpane').forEach(function(p){p.classList.remove('active');});
+      $(b.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ================= SCORER ================= */
+  var M=null;
+  function newMatch(names,bestOf,firstServer){
+    return {names:names,bestOf:bestOf,need:Math.ceil(bestOf/2),
+      games:[0,0],gameHistory:[],gameNo:1,
+      firstServerMatch:firstServer,firstServerGame:firstServer,
+      score:[0,0],history:[],midSwapDone:false,over:false};
+  }
+  function serverInfo(){
+    var t=M.score[0]+M.score[1];
+    if(M.score[0]>=10&&M.score[1]>=10) return {server:(M.firstServerGame+t)%2,left:1};
+    return {server:(M.firstServerGame+Math.floor(t/2))%2,left:2-(t%2)};
+  }
+  function gamePointFor(i){return M.score[i]>=10&&M.score[i]-M.score[1-i]>=1;}
+
+  function renderDots(el,won,cls){
+    el.innerHTML='';
+    for(var k=0;k<M.need;k++){var d=document.createElement('div');d.className='dot'+(k<won?' '+cls:'');el.appendChild(d);}
+  }
+  function render(){
+    $('pn0').textContent=M.names[0];$('pn1').textContent=M.names[1];
+    $('sc0').textContent=M.score[0];$('sc1').textContent=M.score[1];
+    $('gameno').textContent='Game '+M.gameNo;
+    renderDots($('dots1'),M.games[0],'wr');renderDots($('dots2'),M.games[1],'wb');
+    var s=serverInfo();
+    [0,1].forEach(function(i){
+      var c=$('c'+i);
+      c.classList.toggle('serving',s.server===i);
+      c.classList.toggle('gp',gamePointFor(i));
+      $('sv'+i).textContent=s.left;
+    });
+  }
+  var toastTimer=null;
+  function toast(msg,sub){
+    var t=$('toast');
+    t.innerHTML=msg+(sub?'<span class="sub">'+sub+'</span>':'');
+    t.classList.add('show');clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){t.classList.remove('show');},1600);
+  }
+  function showScr(id){
+    ['scoreSetup','scorePlay','scoreBetween','scoreEnd'].forEach(function(s){
+      var el=$(s);el.classList.remove('active');el.style.display='';
+    });
+    var el=$(id);el.classList.add('active');el.style.display='flex';
+  }
+  function point(i){
+    if(!M||M.over)return;
+    M.history.push({score:[M.score[0],M.score[1]],midSwapDone:M.midSwapDone});
+    M.score[i]++;
+    var a=M.score[i],b=M.score[1-i];
+    if(a>=11&&a-b>=2){gameWon(i);return;}
+    var deciding=(M.games[0]===M.need-1&&M.games[1]===M.need-1);
+    if(deciding&&!M.midSwapDone&&(M.score[0]===5||M.score[1]===5)){
+      M.midSwapDone=true;toast('Change ends ⇄','deciding game — first to 5');
+    }else if(M.score[0]===10&&M.score[1]===10){
+      toast('Deuce ⚡','one serve each from here');
+    }else{
+      var mp=gamePointFor(i)&&M.games[i]===M.need-1;
+      if(mp)toast('Match point','for '+M.names[i]);
+      else if(gamePointFor(i))toast('Game point','for '+M.names[i]);
+    }
+    render();
+  }
+  function gameWon(i){
+    M.games[i]++;M.gameHistory.push([M.score[0],M.score[1]]);
+    if(M.games[i]>=M.need){matchWon(i);return;}
+    var cls=i===0?'r':'b';
+    $('bwMsg').innerHTML='<span class="'+cls+'">'+M.names[i]+'</span> takes game '+M.gameNo+'<br>'+M.score[0]+' – '+M.score[1];
+    $('bwScore').textContent='Games: '+M.names[0]+' '+M.games[0]+' — '+M.games[1]+' '+M.names[1];
+    showScr('scoreBetween');
+  }
+  function startNextGame(){
+    M.gameNo++;M.score=[0,0];M.history=[];M.midSwapDone=false;
+    M.firstServerGame=(M.firstServerMatch+(M.gameNo-1))%2;
+    render();showScr('scorePlay');
+    var s=serverInfo();
+    toast(M.names[s.server]+' serves first ⚡','two serves each');
+  }
+  function renderResults(){
+    var rs=store.get('tao_results',[]);
+    var el=$('recentbox');
+    if(!rs.length){el.innerHTML='';return;}
+    el.innerHTML='<div class="label">Recent matches</div>'+rs.slice(0,5).map(function(r){
+      var w=r.g[0]>r.g[1]?0:1;var cls=w===0?'r':'b';
+      return '<div class="card" style="padding:11px 14px;margin-bottom:8px;font-size:13.5px;">'+
+        '<b class="'+cls+'">'+esc(r.n[w])+'</b> d. '+esc(r.n[1-w])+
+        ' <span style="color:var(--slate-dim)">'+r.g[w]+'–'+r.g[1-w]+' · '+r.d+'</span></div>';
+    }).join('');
+  }
+  function matchWon(i){
+    M.over=true;
+    var results=store.get('tao_results',[]);
+    results.unshift({d:new Date().toISOString().slice(0,10),n:M.names,g:[M.games[0],M.games[1]]});
+    store.set('tao_results',results.slice(0,30));
+    renderResults();
+    var cls=i===0?'r':'b';
+    $('endMsg').innerHTML='<span class="'+cls+'">'+M.names[i]+'</span> wins the match';
+    $('finalGames').textContent=M.games[0]+' – '+M.games[1]+' in games · best of '+M.bestOf;
+    var ch=$('chips');ch.innerHTML='';
+    M.gameHistory.forEach(function(g){
+      var c=document.createElement('div');
+      c.className='chip '+((g[0]>g[1])?'wr':'wb');
+      c.textContent=g[0]+'–'+g[1];ch.appendChild(c);
+    });
+    showScr('scoreEnd');
+  }
+  function undo(){
+    if(!M.history.length){toast('Nothing to undo');return;}
+    var h=M.history.pop();
+    M.score=[h.score[0],h.score[1]];M.midSwapDone=h.midSwapDone;render();
+  }
+  function shareResult(){
+    var w=M.games[0]>M.games[1]?0:1;
+    var lines=M.gameHistory.map(function(g){return g[0]+'–'+g[1];}).join(', ');
+    var text='🏓 '+M.names[w]+' d. '+M.names[1-w]+' '+M.games[w]+'–'+M.games[1-w]+
+      ' ('+lines+')\nScored with the Two & Ones Club Bag — twoandones.com ⚡';
+    if(navigator.share){navigator.share({text:text}).catch(function(){});}
+    else if(navigator.clipboard){navigator.clipboard.writeText(text);toast('Copied to clipboard');}
+  }
+  var wakeLock=null;
+  function keepAwake(){
+    if('wakeLock'in navigator){navigator.wakeLock.request('screen').then(function(w){wakeLock=w;}).catch(function(){});}
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'&&M&&!M.over)keepAwake();
+  });
+
+  var bestOf=5,firstServer=0;
+  function segWire(seg,cb){
+    seg.querySelectorAll('button').forEach(function(b){
+      b.addEventListener('click',function(){
+        seg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+        b.classList.add('on');cb(parseInt(b.dataset.v,10));
+      });
+    });
+  }
+  segWire($('segBo'),function(v){bestOf=v;});
+  segWire($('segFs'),function(v){firstServer=v;});
+  function syncFs(){
+    $('fs1').textContent=$('n1').value.trim()||'Red';
+    $('fs2').textContent=$('n2').value.trim()||'Blue';
+  }
+  $('n1').addEventListener('input',syncFs);
+  $('n2').addEventListener('input',syncFs);
+  var savedP=store.get('tao_players',null);
+  if(savedP){$('n1').value=savedP[0]==='Red'?'':savedP[0];$('n2').value=savedP[1]==='Blue'?'':savedP[1];syncFs();}
+  renderResults();
+  $('startBtn').addEventListener('click',function(){
+    var names=[$('n1').value.trim()||'Red',$('n2').value.trim()||'Blue'];
+    store.set('tao_players',names);
+    M=newMatch(names,bestOf,firstServer);
+    render();showScr('scorePlay');keepAwake();
+    toast(M.names[firstServer]+' serves first ⚡','two serves each');
+  });
+  $('c0').addEventListener('click',function(){point(0);});
+  $('c1').addEventListener('click',function(){point(1);});
+  $('undoBtn').addEventListener('click',undo);
+  $('endBtn').addEventListener('click',function(){showScr('scoreSetup');});
+  $('nextGameBtn').addEventListener('click',startNextGame);
+  $('shareBtn').addEventListener('click',shareResult);
+  $('rematchBtn').addEventListener('click',function(){
+    M=newMatch(M.names,M.bestOf,(M.firstServerMatch+1)%2);
+    render();showScr('scorePlay');
+    toast(M.names[M.firstServerMatch]+' serves first ⚡','two serves each');
+  });
+  $('newBtn').addEventListener('click',function(){showScr('scoreSetup');});
+
+  /* ================= GEAR ================= */
+  var TYPES={fh:{ico:'🔴',label:'FH rubber',life:true},bh:{ico:'⚫',label:'BH rubber',life:true},
+    blade:{ico:'🪵',label:'Blade',life:false},shoes:{ico:'👟',label:'Shoes',life:false},
+    balls:{ico:'⚪',label:'Balls',life:false},other:{ico:'🎒',label:'Other',life:false}};
+  var gear=store.get('tao_gear',null);
+  if(!gear){
+    gear=[
+      {type:'fh',name:'Example: Tenergy 05, 2.1mm',date:monthsAgoISO(7)},
+      {type:'bh',name:'Example: Rozena, 1.9mm',date:monthsAgoISO(3)},
+      {type:'blade',name:'Example: Viscaria FL',date:monthsAgoISO(14)}
+    ];
+  }
+  function saveGear(){store.set('tao_gear',gear);}
+
+  /* ---- local notification scheduling (zero-server): active when wrapped in Capacitor ---- */
+  function scheduleRubberReminder(item){
+    try{
+      var LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
+      if(!LN||!TYPES[item.type].life)return;
+      LN.requestPermissions().then(function(){
+        var due=new Date(item.date);due.setMonth(due.getMonth()+6);
+        if(due<=new Date())return;
+        var nid=(store.get('tao_nid',100))+1;store.set('tao_nid',nid);
+        LN.schedule({notifications:[{
+          id:nid,
+          title:'⚡ Rubber check',
+          body:item.name+' turns 6 months old today. Losing spin? Fresh sheet at twoandones.com',
+          schedule:{at:due}
+        }]});
+      });
+    }catch(e){}
+  }
+  function monthsAgoISO(m){
+    var d=new Date();d.setMonth(d.getMonth()-m);
+    return d.toISOString().slice(0,10);
+  }
+  function monthsSince(iso){
+    var d=new Date(iso),now=new Date();
+    return Math.max(0,(now.getFullYear()-d.getFullYear())*12+(now.getMonth()-d.getMonth()));
+  }
+  function ageBadge(item){
+    var m=monthsSince(item.date);
+    var t=TYPES[item.type];
+    var txt=m===0?'this month':m+' mo';
+    if(!t.life) return '<span class="age ok">'+txt+'</span>';
+    if(m<4) return '<span class="age ok">'+txt+' · fresh</span>';
+    if(m<8) return '<span class="age mid">'+txt+' · fading</span>';
+    return '<span class="age old">'+txt+' · replace</span>';
+  }
+  function renderGear(){
+    var list=$('gearlist');list.innerHTML='';
+    gear.forEach(function(item,idx){
+      var t=TYPES[item.type];
+      var el=document.createElement('div');
+      el.className='card gearitem';
+      el.innerHTML='<div class="ico">'+t.ico+'</div>'+
+        '<div class="info"><div class="name">'+esc(item.name)+'</div>'+
+        '<div class="meta">'+t.label+' · since '+item.date+'</div></div>'+
+        ageBadge(item)+'<button class="del" data-i="'+idx+'">✕</button>';
+      list.appendChild(el);
+    });
+    list.querySelectorAll('.del').forEach(function(b){
+      b.addEventListener('click',function(){gear.splice(parseInt(b.dataset.i,10),1);saveGear();renderGear();});
+    });
+    var worn=gear.filter(function(g){return TYPES[g.type].life&&monthsSince(g.date)>=8;});
+    $('nudgebox').innerHTML=worn.length
+      ? '<div class="nudge">⚡ Your <b>'+esc(worn[0].name.replace('Example: ',''))+'</b> is '+monthsSince(worn[0].date)+
+        ' months old. Rubber loses spin long before it looks worn. <a href="https://twoandones.com" target="_blank" rel="noopener">Fresh sheet → twoandones.com</a></div>'
+      : '';
+  }
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  $('gearAddToggle').addEventListener('click',function(){$('gearForm').classList.toggle('open');});
+  $('gearSave').addEventListener('click',function(){
+    var name=$('gName').value.trim(),date=$('gDate').value;
+    if(!name||!date)return;
+    var item={type:$('gType').value,name:name,date:date};
+    gear.unshift(item);
+    saveGear();
+    scheduleRubberReminder(item);
+    $('gName').value='';$('gDate').value='';
+    $('gearForm').classList.remove('open');
+    renderGear();
+  });
+  renderGear();
+
+  /* ================= TOOLS: timers ================= */
+  var tInt=null,tLeft=0;
+  function fmt(s){return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}
+  document.querySelectorAll('.timerbtn').forEach(function(b){
+    b.addEventListener('click',function(){
+      clearInterval(tInt);
+      tLeft=parseInt(b.dataset.secs,10);
+      $('clock').textContent=fmt(tLeft);
+      $('clock').classList.add('show');$('clock').classList.remove('warn');
+      $('clockLabel').textContent=b.dataset.name;$('clockLabel').classList.add('show');
+      $('timerStop').style.display='block';
+      tInt=setInterval(function(){
+        tLeft--;
+        if(tLeft<=0){
+          clearInterval(tInt);
+          $('clock').textContent='TIME';$('clock').classList.add('warn');
+          if(navigator.vibrate)navigator.vibrate([200,100,200]);
+          return;
+        }
+        $('clock').textContent=fmt(tLeft);
+        if(tLeft<=10)$('clock').classList.add('warn');
+      },1000);
+    });
+  });
+  $('timerStop').addEventListener('click',function(){
+    clearInterval(tInt);
+    $('clock').classList.remove('show');$('clockLabel').classList.remove('show');
+    $('timerStop').style.display='none';
+  });
+
+  /* ================= TOOLS: serve drill ================= */
+  var SPINS=['Backspin','Topspin','Sidespin (left)','Sidespin (right)','No-spin float'];
+  var LENGTHS=['short','half-long','long'];
+  var PLACES=['wide <span class="r">forehand</span>','to the <span class="b">middle</span>','wide <span class="b">backhand</span>'];
+  function pick(a){return a[Math.floor(Math.random()*a.length)];}
+  $('drillBtn').addEventListener('click',function(){
+    $('drillOut').innerHTML='<b>'+pick(SPINS)+'</b>, '+pick(LENGTHS)+',<br>'+pick(PLACES);
+  });
+
+  /* ================= RULES accordion ================= */
+  document.querySelectorAll('.rule .q').forEach(function(q){
+    q.addEventListener('click',function(){q.parentElement.classList.toggle('open');});
+  });
+})();
+</script>
+<script>var LARC=[["Abros","Volaras 7"],["Air","Scirocco"],["Air","Panamera"],["Air","Upupupup"],["Air","Classique"],["Air","Illumina"],["Air","Defender S"],["Air","Assassin S"],["Air","Mamba S"],["Air","Tiger S"],["Air","Knight Bee"],["Air","Tiger SUnlimited"],["Akkadi","VMax"],["Akkadi","SMax"],["Akkadi","KMax"],["Akkadi","Java"],["Akkadi","L3"],["Akkadi","K3"],["Akkadi","Hornet"],["Akkadi","999 Pro"],["Andro","Roxon"],["Andro","Blowfish"],["Andro","Blowfish+"],["Andro","Hexer"],["Andro","Hexer+"],["Andro","Revo Fire"],["Andro","Hexer Duro"],["Andro","Hexer Pips"],["Andro","Hexer Pips+"],["Andro","Shifter"],["Andro","Shifter Powersponge"],["Andro","Backside 2.0"],["Andro","Hexer HD"],["Andro","Impuls Powersponge"],["Andro","Rasant Turbo","Jun 30, 2026"],["Andro","Rasant Powersponge","Jun 30, 2026"],["Andro","Rasant Grip","Jun 30, 2026"],["Andro","Rasant Power Grip","Jun 30, 2026"],["Andro","Power 3"],["Andro","Power 6"],["Andro","Hexer Pips 44"],["Andro","K9"],["Andro","Plaxon 525"],["Andro","Plaxon"],["Andro","Rasant Beat","Jun 30, 2026"],["Andro","Rasant Chaos"],["Andro","GTT"],["Andro","Good"],["Andro","Rasanter R37"],["Andro","Rasanter V42"],["Andro","Rasanter R42"],["Andro","Rasanter V47"],["Andro","Rasanter R47"],["Andro","Rasanter R50"],["Andro","Hexer Grip"],["Andro","Hexer Powergrip"],["Andro","Hexer Grip SFX"],["Andro","Hexer Powergrip SFX"],["Andro","Rasanter R53"],["Andro","Rasanter R48"],["Andro","Rasanter C55"],["Andro","Rasanter R45"],["Andro","Rasanter C53"],["Andro","Rasanter C48"],["Andro","Buzzer 400S"],["Andro","Buzzer 400R"],["Andro","Buzzer 500RX"],["Andro","Rasanter C45"],["Andro","Nuzn 50"],["Andro","Nuzn 55"],["Andro","Bype SFX"],["Andro","Bype"],["Andro","Backside 3.0"],["Andro","Nuzn 45"],["Andro","Nuzn 48"],["Andro","Plasma 500S"],["Andro","Force 6"],["Andro","Force 3"],["Andro","HY-Q42"],["Andro","HY-Q48"],["Andro","Vertic"],["Andro","Classic"],["Andro","Impuls"],["Andro","Impuls Speed"],["Andro","Plasma"],["Andro","Upgrade"],["Anta","ATTR01"],["Anta","ATTR02"],["Anta","ATTR03"],["Anta","ATTR04"],["Anta","ATTR05"],["Arbalest","A901"],["Arbalest","Z601"],["Armstrong","SH-I"],["Armstrong","Aka Mark Max"],["Armstrong","Attack 3 Type L"],["Armstrong","Attack 3 Type M"],["Armstrong","Attack 8 Type L"],["Armstrong","Attack 8 Type M"],["Armstrong","Attack 8 Type MEXX"],["Armstrong","Conqueror"],["Armstrong","Conqueror SS"],["Armstrong","Hikari Drive"],["Armstrong","Hikari SR7"],["Armstrong","Long Pimple"],["Armstrong","New Anti Spin"],["Armstrong","New Chopper"],["Armstrong","New Spirit Hi"],["Armstrong","Red Mark Type 1-4"],["Armstrong","Rosin"],["Armstrong","Twister"],["Armstrong","Twister EXT"],["Armstrong","Vector"],["Armstrong","W-a Exx"],["Armstrong","Warrior"],["Atemi","Ace"],["Atemi","Advantage"],["Atemi","Challenge"],["Atemi","Début"],["Atemi","Fight Power"],["Atemi","Ippon"],["Atemi","Super Champ"],["Aurora","T.T.Racket SG258"],["Avalox/AVX","Purot"],["Avalox/AVX","Sogno"],["Avalox/AVX","Sterco"],["Avalox/AVX","Asuka"],["Avalox/AVX","Horme","Jun 30, 2026"],["Avalox/AVX","Mo","Jun 30, 2026"],["Banco","Ouragan"],["Banco","Megaspin"],["Banco","Powerfeeling"],["Banco","Feel Energie"],["Banco","Powerdream"],["Banco","Ultimate Power"],["Banco","X9 Boost"],["Banco","Allstar"],["Banco","Excellence"],["Banco","Feeling"],["Banco","Perfect"],["Banco","Puissance"],["Banco","Start**"],["Banco","Start***"],["Banco","Variation Energy"],["Barna Original","Legend Classic"],["Barna Original","Legend Half Long"],["Barna Original","Legend Long"],["Barna Original","Classic Defence"],["Barna Original","Original Anti"],["Barna Original","Extra Spin"],["Barna Original","Super Glanti"],["Barna Original","Legend Fire"],["Barna Original","Spin Trick"],["Barna Original","Turbulent"],["Barna Original","Virus-2"],["Barna Original","Anti-Topspin Classic"],["Blütenkirsche","KKT868"],["Blütenkirsche","KKT007"],["Blütenkirsche","KKT911"],["Blütenkirsche","KKT110"],["Blütenkirsche","KKT119"],["Blütenkirsche","KKTSakura"],["Blütenkirsche","KKTThree Nine"],["Blütenkirsche","KKT009"],["Blütenkirsche","KKT730"],["Blütenkirsche","KKTSonic Bloom"],["Boli","Dome"],["Boli","Celite"],["Bomb","Oscule"],["Bomb","Violent"],["Bomb","Bombard"],["Bomb","Raider"],["Bomb","Apex"],["Bomb","Mopha"],["Bomb","Rex"],["Bomb","Ufo"],["Bomb","Tensa"],["Bomb","Hammer"],["Bomb","King Roc"],["Bomb","Talent"],["Butterfly","Tenergy 05"],["Butterfly","Tenergy 25"],["Butterfly","Tenergy 64"],["Butterfly","Sriver G3","Jun 30, 2026"],["Butterfly","Sriver G3FX","Jun 30, 2026"],["Butterfly","Roundell"],["Butterfly","Tenergy 05FX"],["Butterfly","Tenergy 25FX"],["Butterfly","Tenergy 64FX"],["Butterfly","Addoy"],["Butterfly","Wakaba"],["Butterfly","Pan Asia"],["Butterfly","Yuki"],["Butterfly","Tenergy 80"],["Butterfly","Largestorm"],["Butterfly","Tenergy 80FX"],["Butterfly","Bryce Highspeed"],["Butterfly","Impartial XS"],["Butterfly","Impartial XB"],["Butterfly","Rozena"],["Butterfly","Lagnus"],["Butterfly","Spryer"],["Butterfly","Dignics 05"],["Butterfly","Dignics 80"],["Butterfly","Dignics 64"],["Butterfly","Tenergy 05N"],["Butterfly","Tenergy 09C"],["Butterfly","Tenergy 05HARD"],["Butterfly","Aibiss"],["Butterfly","Dignics 09C"],["Butterfly","Magnitude"],["Butterfly","Tenergy 19"],["Butterfly","Ilius B"],["Butterfly","Ilius S"],["Butterfly","Glayzer"],["Butterfly","Glayzer 09C"],["Butterfly","Proudo 44P.I."],["Butterfly","Bugller"],["Butterfly","ZEED03","Jun 30, 2026"],["Butterfly","Zyre 03"],["Butterfly","Challenger Attack"],["Butterfly","Feint AG"],["Butterfly","Feint Long II"],["Butterfly","Feint Long III"],["Butterfly","Feint-Ox"],["Butterfly","Feint-Soft"],["Butterfly","Flextra"],["Butterfly","Large 44DX"],["Butterfly","Morim"],["Butterfly","Orthodox-DX,103"],["Butterfly","Sapphira"],["Butterfly","Speedy-P.O."],["Butterfly","Sriver EL"],["Butterfly","Sriver FX"],["Butterfly","Sriver L"],["Butterfly","Stayer"],["Butterfly","Super Anti"],["Butterfly","Tackifire-D"],["Butterfly","Tackiness-C"],["Butterfly","Tackiness-CII"],["Butterfly","Tackiness-D"],["Carlton","Vapour Trail R1"],["Carlton","Kinesis Xelerate K1"],["Champion","V7"],["Champion","V5"],["Champion","Hexa Pro 1"],["Champion","Hexa"],["Champion","Khan"],["Chonglan","Lan Feng"],["Chonglan","Lan Ying"],["CNSTT","Beaumont"],["CNSTT","Didsbury"],["CNSTT","Tortoise"],["CNSTT","Dragon"],["CNSTT","Rosefinch"],["CNSTT","T-King"],["CNSTT","Hectar"],["CNSTT","Warwick"],["Commander","Cicada"],["Cornilleau","*"],["Cornilleau","**"],["Cornilleau","***"],["Cornilleau","****"],["Cornilleau","*****"],["Cornilleau","******"],["Cornilleau","Target Pro GT","Jun 30, 2026"],["Cornilleau","Pilot Fast","Jun 30, 2026"],["Cornilleau","Pilot Sound Power","Jun 30, 2026"],["Cornilleau","Drive Speed","Jun 30, 2026"],["Cornilleau","Drive Spin","Jun 30, 2026"],["Cornilleau","Drive Intens"],["Cornilleau","Pilot Pulse"],["Cornilleau","Start'Up Evo"],["Cornilleau","Target Pro XD"],["Counterstrike Table Tennis","Dark Velocity"],["Counterstrike Table Tennis","Spin Mystic"],["Counterstrike Table Tennis","Auto Pilot"],["Crack","999"],["Crack","SP"],["Crack","Twister"],["Darker","Universe"],["Dawei","388D-2"],["Dawei","Kingof Long"],["Dawei","388C-2"],["Dawei","388B-1"],["Dawei","388C-3"],["Dawei","2008"],["Dawei","388A"],["Dawei","388A-4"],["Dawei","388C-1"],["Dawei","388D"],["Dawei","388D-1"],["Dawei","Inspirit"],["Dawei","Saviga"],["Dawei","Saviga V"],["Decathlon Kuikma","TTRBBronze"],["Decathlon Kuikma","TTRBBronze Spin"],["Decathlon Kuikma","TTRBSilver Spin"],["Decathlon Kuikma","TTRBSilver Speed"],["Decathlon Kuikma","TTRBGold"],["Decathlon Kuikma","TTRBGold Spin"],["Decathlon Kuikma","TTRBGold Speed"],["Decathlon Kuikma","TTRBPro Flame"],["Decathlon Kuikma","TTRBPro Forest"],["Decathlon Kuikma","TTRBPro Rock"],["Decathlon Kuikma","TTRBPro Wind"],["Decathlon Pongori","TTRB100"],["Decathlon Pongori","TTRB100 Spin"],["Decathlon Pongori","TTRB500"],["Decathlon Pongori","TTRB500 Spin"],["Decathlon Pongori","TTRB900 All"],["Decathlon Pongori","TTRB900 Spin"],["Decathlon Pongori","TTRB900 Soft","Jun 30, 2026"],["Decathlon Pongori","TTRB900 Long","Jun 30, 2026"],["Decathlon Pongori","TTRB930 Speed","Jun 30, 2026"],["Der Materialspezialist","Superwall"],["Der Materialspezialist","Hardcore"],["Der Materialspezialist","Burnout"],["Der Materialspezialist","Tenacious Violence"],["Der Materialspezialist","Breakout"],["Der Materialspezialist","Transformer"],["Der Materialspezialist","Master-Anti","Jun 30, 2026"],["Der Materialspezialist","Killing Defender"],["Der Materialspezialist","Hellcat"],["Der Materialspezialist","Rebellion"],["Der Materialspezialist","Diabolic"],["Der Materialspezialist","Shockwave"],["Der Materialspezialist","Elimination Extra Long"],["Der Materialspezialist","Mega-Block"],["Der Materialspezialist","Anti Speed"],["Der Materialspezialist","Turtle Twister"],["Der Materialspezialist","Outkill"],["Der Materialspezialist","Kamikaze"],["Der Materialspezialist","Reflection"],["Der Materialspezialist","Firestorm"],["Der Materialspezialist","Power Pipes"],["Der Materialspezialist","Elite Long"],["Der Materialspezialist","Scandal"],["Der Materialspezialist","Störkraft"],["Der Materialspezialist","Flashback"],["Der Materialspezialist","L.S.D.Extra Long"],["Der Materialspezialist","Hellracer"],["Der Materialspezialist","Spectre"],["Der Materialspezialist","Sabotage"],["Der Materialspezialist","Wildfire"],["Der Materialspezialist","Spinfire"],["Der Materialspezialist","E.S.P"],["Der Materialspezialist","TTR-Hunter"],["Der Materialspezialist","TTR-Killer"],["Der Materialspezialist","Fakir"],["Der Materialspezialist","Hallucination"],["Der Materialspezialist","Spinfire Extreme"],["Derwind","Stolz"],["Derwind","Rayhe"],["Derwind","Stellar"],["Dianchi","Dianchi"],["Donic","Coppa JOPlatin"],["Donic","Vario Gold"],["Donic","Alligator Def"],["Donic","Baracuda"],["Donic","Vario Big Slam"],["Donic","Acuda S1"],["Donic","Acuda S2"],["Donic","Acuda S3"],["Donic","Coppa X1"],["Donic","Coppa X2"],["Donic","Coppa X3"],["Donic","Alligator Anti"],["Donic","Acuda S1 Turbo"],["Donic","Bluefire M1"],["Donic","Bluefire M2"],["Donic","Bluefire M3"],["Donic","Bluefire M1 Turbo"],["Donic","Spike P1"],["Donic","Spike P2"],["Donic","Desto F1 Plus"],["Donic","Blues T1","Dec 31, 2026"],["Donic","Bluefire Big Slam"],["Donic","Desto F4"],["Donic","Slice 40/CD"],["Donic","Bluestorm Z1"],["Donic","Bluestorm Z2"],["Donic","Bluestorm Z3"],["Donic","Bluestorm Z1 Turbo"],["Donic","Bluestorm Z1 Big Slam"],["Donic","L-Meister 44"],["Donic","Blue Grip C1"],["Donic","Blue Grip C2"],["Donic","Blue Grip S2"],["Donic","Bluestorm Pro"],["Donic","Blue Star A1"],["Donic","Blue Grip S1"],["Donic","Piranja CD"],["Donic","Blue Star A2"],["Donic","Blue Star A3"],["Donic","Slice 40CS"],["Donic","Revolution X"],["Donic","Blue Grip J1"],["Donic","Blue Grip J2"],["Donic","Blue Grip J3"],["Donic","Blue Grip D1"],["Donic","Desto F1rst"],["Donic","Desto N2xt"],["Donic","Coppa E1"],["Donic","Coppa E2"],["Donic","Coppa E3"],["Donic","*"],["Donic","**"],["Donic","***"],["Donic","Akkadi Taichi"],["Donic","Alpha-Slick"],["Donic","Baxster"],["Donic","Coppa"],["Donic","Coppa JOGold"],["Donic","Coppa JOSilver"],["Donic","Coppa Tenero"],["Donic","Desto F1"],["Donic","Desto F2"],["Donic","Desto F3"],["Donic","Easy-Slick"],["Donic","Liga"],["Donic","Piranja FDTEC"],["Donic","Quattro"],["Donic","Quattro A'Conda"],["Donic","Solo"],["Donic","Sonex JPGold"],["Donic","Twingo"],["Donic","Vari-Slick"],["Donic","Vario"],["Donic","Vario Soft"],["Donier","Max"],["Donier","Max Attack"],["Donier","Versus"],["Double Day","Oten"],["Double Fish","AOne"],["Double Fish","FA213"],["Double Fish","FC218"],["Double Fish","FS232"],["Double Fish","FL233"],["Double Fish","8338"],["Double Fish","8484"],["Double Fish","1615"],["Double Fish","815"],["Double Fish","830"],["Double Fish","Volant"],["Double Fish","Volant 2"],["Double Fish","Volant 3"],["Double Fish","Athlon 1"],["Double Fish","Athlon 2"],["Double Fish","Qiji"],["Double Fish","DF16"],["Double Fish","DF26"],["Double Fish","Polestar-P"],["Double Fish","Polestar-S"],["Double Happiness/DHS","Hurricane"],["Double Happiness/DHS","Hurricane II"],["Double Happiness/DHS","Skyline"],["Double Happiness/DHS","PF4"],["Double Happiness/DHS","Skyline II"],["Double Happiness/DHS","Skyline III"],["Double Happiness/DHS","6512"],["Double Happiness/DHS","PF4-1"],["Double Happiness/DHS","G555"],["Double Happiness/DHS","G666"],["Double Happiness/DHS","G888"],["Double Happiness/DHS","C7"],["Double Happiness/DHS","C8"],["Double Happiness/DHS","Cloud&Fog II"],["Double Happiness/DHS","Cloud&Fog III"],["Double Happiness/DHS","651"],["Double Happiness/DHS","652"],["Double Happiness/DHS","874"],["Double Happiness/DHS","Dragonow"],["Double Happiness/DHS","Sharping"],["Double Happiness/DHS","Nittaku Hurricane II"],["Double Happiness/DHS","Nittaku Hurricane III"],["Double Happiness/DHS","Nittaku Hurricane Pro II"],["Double Happiness/DHS","Nittaku Hurricane Pro III"],["Double Happiness/DHS","Sharping Nittaku"],["Double Happiness/DHS","Nittaku C7"],["Double Happiness/DHS","Tin Arc"],["Double Happiness/DHS","Tin Arc II"],["Double Happiness/DHS","Tin Arc III"],["Double Happiness/DHS","Tin Arc 5"],["Double Happiness/DHS","Nittaku Tin Arc 5"],["Double Happiness/DHS","Cloud&fog"],["Double Happiness/DHS","Hurricane 8"],["Double Happiness/DHS","Hurricane 9"],["Double Happiness/DHS","Gold Arc 5"],["Double Happiness/DHS","Gold Arc 8"],["Double Happiness/DHS","Sharping 2"],["Double Happiness/DHS","Gold Arc 9"],["Double Happiness/DHS","Hurricane III"],["Dr Neubauer","Special Defence"],["Dr Neubauer","Goliath"],["Dr Neubauer","Monster Classic"],["Dr Neubauer","Boomerang Classic"],["Dr Neubauer","Gorilla"],["Dr Neubauer","Grizzly"],["Dr Neubauer","Anti Special"],["Dr Neubauer","A-B-S"],["Dr Neubauer","Fighter"],["Dr Neubauer","Desperado"],["Dr Neubauer","Terminator#"],["Dr Neubauer","Allround Premium"],["Dr Neubauer","Killer"],["Dr Neubauer","Number 1"],["Dr Neubauer","Viper"],["Dr Neubauer","Buffalo"],["Dr Neubauer","Power Attack"],["Dr Neubauer","Viper Soft"],["Dr Neubauer","Aggressor"],["Dr Neubauer","Bison"],["Dr Neubauer","Gangster"],["Dr Neubauer","K.O."],["Dr Neubauer","Django"],["Dr Neubauer","Rhino"],["Dr Neubauer","Nugget"],["Dr Neubauer","Desperado 2"],["Dr Neubauer","Tarantula"],["Dr Neubauer","K.O.Pro"],["Dr Neubauer","Pistol 2"],["Dr Neubauer","Domination Speed Soft"],["Dr Neubauer","Trouble Maker"],["Dr Neubauer","A-B-S2"],["Dr Neubauer","Explosion"],["Dr Neubauer","Allround Premium 2"],["Dr Neubauer","A-B-S2 Soft"],["Dr Neubauer","Aggressor Pro"],["Dr Neubauer","Killer Pro Evo"],["Dr Neubauer","Explosion Pro"],["Dr Neubauer","Tornado Extreme"],["Dr Neubauer","Killer Soft"],["Dr Neubauer","Aggressor Evo"],["Dr Neubauer","A-B-S2 Evo"],["Dr Neubauer","Explosion Extreme"],["Dr Neubauer","Killer Extreme"],["Dr Neubauer","Tornado Supreme"],["Dr Neubauer","Dominance Spin"],["Dr Neubauer","Dominance Speed"],["Dr Neubauer","Punch"],["Dr Neubauer","A-B-S2 Pro"],["Dr Neubauer","Defence Master"],["Dr Neubauer","Dominance"],["Dr Neubauer","A-B-S3"],["Dr Neubauer","Explosion Soft"],["Dr Neubauer","Tornado Supreme Soft"],["Dr Neubauer","Dominance Spin Hard"],["Dr Neubauer","K.O.Extreme"],["Dr Neubauer","Desperado Reloaded"],["Dr Neubauer","Dominance Speed Hard"],["Dr Neubauer","Trouble Maker Reloaded"],["Dr Neubauer","A-B-S3 Pro"],["Dr Neubauer","Diamant"],["Dr Neubauer","Domination"],["Dr Neubauer","Leopard"],["Dr Neubauer","Pistol"],["Dr Neubauer","Tornado Ultra"],["Dragonfly","Syllabus"],["Dunlop","Evolution Max"],["Dunlop","Revolution Max"],["Dunlop","Revolution Max II"],["Dynamic Sports","Soared Wolf"],["Efforter","Diadem"],["Efforter","Number 8"],["Efforter","Tank Pro"],["Efforter","Tank Half Long"],["Efforter","Torpedo"],["Efforter","Hunter"],["Efforter","Jewel"],["Efforter","Melody"],["Efforter","Tank IISpeed"],["Efforter","Tank IIISpin"],["Efforter","Torpedo Pro"],["Föerster","H-OF2"],["Föerster","OFF4JET"],["Föerster","***"],["Friendship","R.I.T.C.729-5"],["Friendship","R.I.T.C.729-08"],["Friendship","729105"],["Friendship","729 Battle"],["Friendship","729 Battle II"],["Friendship","729 Origin"],["Friendship","729 Aurora"],["Friendship","Presto Speed"],["Friendship","Presto Spin"],["Friendship","Bloom Power"],["Friendship","Bloom Spin"],["Friendship","Pando"],["Friendship","Visnatura"],["Friendship","729 Battle III"],["Friendship","563SP"],["Friendship","802SP"],["Friendship","Dragon-L"],["Friendship","Dragon-F"],["Friendship","Phoenix"],["Friendship","729 Taichi"],["Friendship","Xuan A."],["Friendship","Xuan D."],["Friendship","Xtreme"],["Friendship","729 Focus"],["Friendship","729 Focus II"],["Friendship","729 Focus III"],["Friendship","729 High Point"],["Friendship","R.I.T.C.563"],["Friendship","R.I.T.C.563-1"],["Friendship","R.I.T.C.729"],["Friendship","R.I.T.C.729-2"],["Friendship","R.I.T.C.729-40H"],["Friendship","R.I.T.C.729-40S"],["Friendship","R.I.T.C.729 Cream"],["Friendship","R.I.T.C.729 Dr.Evil"],["Friendship","R.I.T.C.729 Faster"],["Friendship","R.I.T.C.729 Geo Spin"],["Friendship","R.I.T.C.729 Geo Spin Tacky"],["Friendship","R.I.T.C.729 Higher"],["Friendship","R.I.T.C.729SP"],["Friendship","R.I.T.C.755"],["Friendship","R.I.T.C.799"],["Friendship","R.I.T.C.802"],["Friendship","R.I.T.C.802-1"],["Friendship","R.I.T.C.802-40"],["Friendship","R.I.T.C.804"],["Friendship","R.I.T.C.837"],["Friendship","R.I.T.C.2000 Tack-Speed"],["Friendship","Sky-Wing"],["Friendship","Super 729FX"],["Friendship KTL","Limitless"],["G.Yap","Vulpe"],["G.Yap","Thunder"],["G.Yap","Cyclone"],["G.Yap","Energy"],["G.Yap","Storm"],["Gambler","Sevens"],["Gambler","Big Gun"],["Gambler","Burst"],["Gambler","Zero High Gravity"],["Gambler","GXS"],["Gambler","GXM"],["Gambler","GXL"],["Gambler","X3 Diamond"],["Gambler","Vintage"],["Gambler","Nine Ultra Tack"],["Gambler","Mech-Tek Predator"],["Gambler","Volt-M"],["Gambler","Volt-T"],["Gambler","Volt Pro"],["Gambler","Volt Speed"],["Gambler","4 Kings","Jun 30, 2026"],["Gambler","Aces","Jun 30, 2026"],["Gds","Devastator"],["Gds","Firework"],["Gewo","Thunderball 2"],["Gewo","Nanoflex"],["Gewo","Return Pro"],["Gewo","Hype EL"],["Gewo","Proton Neo"],["Gewo","Hype XTPro"],["Gewo","Hype KRPro"],["Gewo","Raver"],["Gewo","CSPowerspeed"],["Gewo","CSPowerspin"],["Gewo","Neoflexx"],["Gewo","Nexxus Pro"],["Gewo","Nexxus XTPro"],["Gewo","Nexxus ELPro Hard"],["Gewo","Nexxus XTPro Hard"],["Gewo","Codexx Pro"],["Gewo","Nexxus El Pro Super Select"],["Gewo","Codexx Super Select Pro"],["Gewo","Inventus XTPro"],["Gewo","V8"],["Gewo","Elaxxone FT"],["Gewo","S6"],["Gewo","Rose"],["Gewo","Mega Flex Control"],["Gewo","Nano"],["Gewo","Targetair TEC"],["Ghenghaida","Flood"],["Ghenghaida","Magnificent"],["Giant Dragon","Taichi"],["Giant Dragon","Karate"],["Giant Dragon","Meteorite"],["Giant Dragon","Giant Long"],["Giant Dragon","Allround"],["Giant Dragon","Guard"],["Giant Dragon","Submarine"],["Giant Dragon","Topenergy"],["Giant Dragon","Superspin G3"],["Giant Dragon","Superspin G4"],["Giant Dragon","Superveloce V12"],["Giant Dragon","Dragon Talon"],["Giant Dragon","Snowflake"],["Giant Dragon","Cropcircles"],["Giant Dragon","Blast"],["Giant Dragon","612"],["Giant Dragon","Attack Long"],["Giant Dragon","Commander"],["Giant Dragon","Storm"],["Giant Dragon","Future"],["Giant Dragon","Soft Anti"],["Giant Dragon","Peril Anti"],["Giant Dragon","807"],["Giant Dragon","8086"],["Giant Dragon","8087"],["Giant Dragon","8088"],["Giant Dragon","8228A"],["Giant Dragon","8228B"],["Giant Dragon","Extspeed"],["Giant Dragon","Maxspin"],["Giant Dragon","Superspeed"],["Giant Dragon","Superspin"],["Giant Dragon","Superspin G2"],["GKI","Euro Chelonz"],["GKI","Chelon ZHybrid Z","Jun 30, 2026"],["GKI","Hybrid ZGX"],["GKI","Hybridz Power"],["GKI","Superia"],["GKI","Euro Jumbo"],["GKI","Euro Spintec"],["GKI","Euro XX"],["Guoqiu","Gong Fu","Jun 30, 2026"],["Guoqiu","AB","Jun 30, 2026"],["Guoqiu","MGLong"],["Guoqiu","Mechanic"],["Guoqiuhui","Zi"],["Haitian","Hippocampus Speed"],["Haitian","Seal"],["Haitian","Otarri Inae"],["Haitian","Sea Otter"],["Haitian","Walrus"],["Haitian","Sea Dragon"],["Haitian","Phoenix"],["Hallmark","Pheonix"],["Hallmark","Friction Special 2"],["Hallmark","Tactics LP"],["Hallmark","Destroyer"],["Hallmark","Devil Anti"],["Hallmark","Confusion-LP"],["Hallmark","Clutter-LP"],["Hallmark","Illusion-SP"],["Hallmark","Mega Spin Control"],["Hallmark","Panther","Jun 30, 2026"],["Hesheng","Speedy"],["Hostepoch","Potent Spin"],["Hostepoch","Potent Loop"],["Hostepoch","Potent Float"],["Hostepoch","Potent Block"],["Hostepoch","Potent Attack I."],["Hostepoch","Potent Attack III"],["Hostepoch","Potent Spin II"],["Hypatek","Catalyst Go"],["Hypatek","Catalyst Pro"],["Hypatek","Catalyst X"],["Imaxi","East Wind I."],["Imaxi","East Wind II."],["Imaxi","East Wind III."],["Imperial","Factor"],["Imperial","Spinbreaker"],["Imperial","Attack"],["Imperial","China"],["Imperial","Cyber Tacky"],["Imperial","Vector Pro"],["Imperial","Balance Pro"],["Imperial","Alpha Speed"],["Imperial","Crash"],["Imperial","Force"],["Imperial","Rubber 1120one"],["Imperial","Rubber 4520one"],["Imperial","Super Strike"],["Imperial","Swift"],["Inzone","Evolve"],["Inzone","Progress"],["Inzone","Spin"],["Inzone","Vizion AR"],["Inzone","Vizion LC"],["Japtec","Fickle"],["Japtec","Balance"],["Japtec","Experience"],["Japtec","Performance"],["Japtec","Precision"],["Jinmanguan","Speed FX"],["Jinmanguan","Power Hard"],["Joola","Express Ultra"],["Joola","X-Plode"],["Joola","Rhyzm"],["Joola","Upp"],["Joola","4 You"],["Joola","Zack"],["Joola","Rhyzm-tech","Jun 30, 2026"],["Joola","Samba Tech"],["Joola","CWX"],["Joola","Golden Tango"],["Joola","Rhyzer 43"],["Joola","Axxess"],["Joola","Rhyzer 48"],["Joola","Golden Tango PS"],["Joola","Rhyzer Pro 50"],["Joola","Rhyzer Pro 45"],["Joola","Dynaryz ACC"],["Joola","Dynaryz AGR"],["Joola","Dynaryz CMD"],["Joola","Rhyzen CMD"],["Joola","Rhyzen ZGR"],["Joola","Micron"],["Joola","Vizon"],["Joola","Dynaryz ZGR"],["Joola","Rhyzen Ice"],["Joola","Rhyzen Fire"],["Joola","Dynaryz ZGX"],["Joola","Rhyzen ZGX"],["Joola","Tronix CMD"],["Joola","Tronix ACC"],["Joola","Tronix ZGR"],["Joola","Dynaryz Inferno"],["Joola","Micron+"],["Joola","Micron X"],["Joola","Hugo Calderano Trinity Charged"],["Joola","Hugo Calderano Trinity Dynamic"],["Joola","Energy","Jun 30, 2026"],["Joola","Energy X-tra"],["Joola","Fiesta"],["Joola","Mambo","Jun 30, 2026"],["Joola","Samba"],["Joola","Tango Ultra"],["Juic","Nanospin"],["Juic","Nano Spin II"],["Juic","Patisuma V"],["Juic","Neo Galaxia"],["Juic","Progalaxia"],["Juic","999"],["Juic","999 Elite"],["Juic","Driva Smash Ultima"],["Juic","Leggy R"],["Juic","Neo Anti"],["Juic","Spin Spiel"],["Ka Mey","Uwe 46"],["Ka Mey","Uwe 50"],["Ka Mey","Uwe 55"],["Kaseed","Gemstone"],["Kawasaki","KSD-Honor"],["Kawasaki","KSD-Master"],["Kawasaki","KSD-King"],["KBS","Assos Power"],["KBS","Moliva"],["KBS","Rize Soft"],["KBS","Tarsus Spin"],["KBS","Truva Lp"],["KBS","Truva SP"],["Kettler","Power"],["Kettler","Power Plus"],["Kettler","Power Pro"],["Killerspin","Fortissimo"],["Killerspin","Nitrx-4Z"],["Kinson","Perfect"],["Kinson","Super Spin"],["Kokutaku","Rooibos","Jun 30, 2026"],["Kokutaku","Macaron","Jun 30, 2026"],["Kokutaku","G-10"],["Kokutaku","Spec-V"],["Kokutaku","Spindle"],["Kokutaku","Synchron"],["KTL","Black Power[B]"],["KTL","Red Diamond"],["KTL","Stranger"],["KTL","Golden Star"],["KTL","Magic Power"],["KTL","Pro XP"],["KTL","Pro XT"],["KTL","Rapid Speed"],["KTL","Rapid Sound"],["KTL","Rapid Soft"],["KTL","Rapid Power"],["KTL","Torrent","Jun 30, 2026"],["L.d.t.t","EA777"],["LFI","Bronco 01"],["Lion","Roar"],["Lion","Claw"],["Lion","Star"],["Lion","2 Stars"],["Lion","3 Stars"],["Lion","Super 3"],["Lion","5 Stars"],["Lion","Aggressor"],["Lion","Allrounder"],["Lion","Elite Control"],["Lion","Rebirth"],["Lion","Radiant"],["Lion","Firearms"],["Lion","Mantlet"],["Lion","Trapper"],["Lion","Pavise"],["Lion","Trident"],["Lion","Trapper SP"],["Lion","E-Shield"],["Lion","Vanquish"],["Lion","Trapper X"],["Lion","Explorer"],["Lion","International"],["Lion","Scirocco"],["Lion","SS800"],["Lion","Typhoon"],["Lion","XA900"],["Loki","GTX"],["Loki","TIIIParagon"],["Loki","N80"],["Loki","Rxton I"],["Loki","Rxton III"],["Loki","Rxton V"],["Loki","Arthur Asia"],["Loki","Arthur Europe"],["Loki","Arthur Pro"],["Loki","Arthur China"],["Loki","Rxton VII"],["Loki","Rxton IX"],["Loki","Telson Hyper"],["Loki","Kirin I."],["Loki","Kirin III."],["Loki","Kirin V."],["Loki","Kirin-MP"],["Loki","Kirin-LP"],["Loki","Kirin-SP"],["Loki","Rxton 9 Pro"],["Loki","Rxton 9 China"],["Loki","Telson Speed"],["Loki","Telson Germany"],["Loki","Telson China"],["Loki","Teslon Pro Thick"],["Maxwill","M1"],["Metal TT","Death"],["Metal TT","Brutal"],["Meteor","8512"],["Meteor","9012"],["Meteor","835"],["Meteor","845"],["Meteor","71-1"],["Meteor","71-2"],["Meteor","575"],["Meteor","813"],["Milky Way/Yinhe","Apollo"],["Milky Way/Yinhe","Sun"],["Milky Way/Yinhe","Moon"],["Milky Way/Yinhe","Moon Speed"],["Milky Way/Yinhe","Max Tense E.Moon"],["Milky Way/Yinhe","Big Dipper"],["Milky Way/Yinhe","Qing Pro"],["Milky Way/Yinhe","Super Kim"],["Milky Way/Yinhe","Uranus Poly"],["Milky Way/Yinhe","Moxa Neptune"],["Milky Way/Yinhe","Moxa Pluto"],["Milky Way/Yinhe","Comet"],["Milky Way/Yinhe","Moxa 955"],["Milky Way/Yinhe","Young"],["Milky Way/Yinhe","VIP"],["Milky Way/Yinhe","VVIP"],["Milky Way/Yinhe","Uranus Pro"],["Milky Way/Yinhe","Moxa 9000"],["Milky Way/Yinhe","Moxa Mercury"],["Milky Way/Yinhe","Max Tense Venus"],["Milky Way/Yinhe","Max Tense Earth"],["Milky Way/Yinhe","Max Tense Mars"],["Milky Way/Yinhe","Max Tense Jupiter"],["Milky Way/Yinhe","Max Tense Saturn"],["Milky Way/Yinhe","Moxa Hui Chuan"],["Milky Way/Yinhe","Moxa Bai YD"],["Milky Way/Yinhe","Particle World"],["Mizuno","Rookie"],["Mizuno","GFT48","Jun 30, 2026"],["Mizuno","GFT45","Jun 30, 2026"],["Mizuno","GFT40","Jun 30, 2026"],["Mizuno","GFPRO"],["Mizuno","Q3"],["Mizuno","Q4"],["Mizuno","GFR"],["Mizuno","Q5"],["Mizuno","Unison+"],["Mizuno","Q1"],["Mizuno","Qquality"],["Mizuno","Booster JP"],["Mizuno","Qpower"],["Mizuno","Booster EV"],["Mizuno","Booster SA"],["Neottec","Hinomi"],["Neottec","Iken"],["Neottec","Katana"],["Neottec","Tokkan"],["Neottec","Enkei"],["Neottec","X5"],["Nexy","Etika"],["Nexy","Spira"],["Nexy","Rojeta"],["Nimatsu","Zerberus"],["Nimatsu","Hurricane"],["Nimatsu","Pegasus"],["Nimatsu","Scorpion"],["Nimatsu","Spinfighter***"],["Nimatsu","XX5"],["Nittaku","Wallest"],["Nittaku","Fastarc G-1"],["Nittaku","Fastarc S-1"],["Nittaku","Royallarge"],["Nittaku","Flyatt"],["Nittaku","Pimple Slide"],["Nittaku","Jewellarge"],["Nittaku","P12"],["Nittaku","Fastarc C-1"],["Nittaku","Zalt"],["Nittaku","Flyatt Spin"],["Nittaku","Jammin"],["Nittaku","DOKnuckle"],["Nittaku","Fastarc P-1","Jun 30, 2026"],["Nittaku","Super Do Knuckle"],["Nittaku","Factive"],["Nittaku","Hayate 44"],["Nittaku","Do Knuckle 44"],["Nittaku","Moristo SPAX"],["Nittaku","Ruu King"],["Nittaku","Goriki Kaisoku"],["Nittaku","F-Road"],["Nittaku","Sonic AR"],["Nittaku","Spintial"],["Nittaku","Sieger PK50"],["Nittaku","Inception"],["Nittaku","Hammond Z2"],["Nittaku","Hammond Z6"],["Nittaku","Specialist X"],["Nittaku","Royalprince"],["Nittaku","Largeking"],["Nittaku","DOKnuckle LONG-1"],["Nittaku","Hammond Z8"],["Nittaku","Specialist Start"],["Nittaku","Ultec"],["Nittaku","Grastory 44"],["Nittaku","Genextion"],["Nittaku","Genextion V2C"],["Nittaku","Flyatt Evo"],["Nittaku","Presealarge"],["Nittaku","Blastac"],["Nittaku","Lebest"],["Nittaku","Steluck"],["Nittaku","Royalcrown"],["Nittaku","Trymate"],["Nittaku","Best Anti"],["Nittaku","Express"],["Nittaku","Hammond"],["Nittaku","Hammond FA"],["Nittaku","Japan Original"],["Nittaku","Magic Carbon"],["Nittaku","Moristo 2000"],["Nittaku","Moristo 44"],["Nittaku","Moristo DF"],["Nittaku","Moristo LP"],["Nittaku","Moristo LPOne"],["Nittaku","Moristo SP"],["Nittaku","Narucross EX"],["Nittaku","Super Large"],["Otaku","Tsunami"],["Otaku","Kaminari"],["Palio","Macro ERA"],["Palio","Conqueror"],["Palio","Flying Dragon"],["Palio","Power Dragon"],["Palio","Thor`s"],["Palio","Blit`z"],["Palio","The Way"],["Palio","Aeolus"],["Palio","AK47"],["Palio","Amigo"],["Palio","CJ8000"],["Palio","CK531A"],["Palio","Drunken Dragon"],["Palio","Emperor Dragon"],["Palio","Hadou"],["Palio","Hidden Dragon"],["Palio","HK1997"],["Palio","Macro"],["Palio","Macro Pro"],["Palio","Wildish Dragon"],["Palio","WP1013"],["Pimplepark","Wobbler"],["Pimplepark","Cluster"],["Pimplepark","Epos"],["Pimplepark","Tenaxx"],["Pimplepark","Bloxx"],["Pimplepark","Bumper"],["Pimplepark","Attaxx Speed"],["Pingpangwang","Super"],["Pinyi","Tsu Nami"],["Pinyi","Cui Feng"],["Pinyi","Pi Shan"],["Pinyi","Qiankun"],["Pinyi","Hongming"],["Pongfinity","Smash"],["Pongfinity","Sensei Elite"],["Prasidha","830"],["Prasidha","Action"],["Prasidha","Frankfurt"],["Prasidha","Long-A"],["Prasidha","Osaka"],["Prasidha","Tokyo"],["Prasidha","Twister 8338"],["Pro Touch","Tournament A"],["Pro Touch","Expert A"],["Pro Touch","Competition S"],["Pro-Spin","Precision Pro"],["Proideal","Magician I"],["Proideal","Magician II"],["Proideal","Rubouter I"],["Proideal","Rubouter IV"],["Proideal","Rubouter V"],["Proideal","Magician Block IIPro"],["Quanshibao","Power-F1"],["Quanshibao","Speed-08"],["Quanshibao","Performance P1"],["Quanshibao","Super Speed S1"],["Radak","D1"],["Rallys","Redmonkey"],["Rallys","Redmonkey Spin"],["Rallys","Bluefox"],["Reactor","Corbor"],["Reactor","Tornado"],["Reactor","Ckylin"],["Reactor","Thunder"],["Reactor","Hyper-Power"],["Rizy","Yellow River 02 Pro"],["Rizy","Yellow River Purple Loong"],["Rizy","Yellow River Red Loong"],["Sanwei","Target"],["Sanwei","T88 Taiji"],["Sanwei","T88"],["Sanwei","T88-III"],["Sanwei","Target Pro 40+"],["Sanwei","DZDizzy"],["Sanwei","Gear Hyper"],["Sanwei","Target National"],["Sanwei","Hyper Z-1"],["Sanwei","AUGolden"],["Sauer&Troeger","Hellfire"],["Sauer&Troeger","Secret Flow"],["Sauer&Troeger","Easy P"],["Sauer&Troeger","Hass"],["Sauer&Troeger","Zargus"],["Sauer&Troeger","Hipster"],["Sauer&Troeger","Schmerz"],["Sauer&Troeger","Super Stop"],["Sauer&Troeger","Hellfire-X"],["Sauer&Troeger","Monkey"],["Sauer&Troeger","Blackout"],["Sauer&Troeger","Icon"],["Saviga","Turbo"],["Saviga","Fantasy"],["Saviga","27"],["Saviga","Se 7en Swing Sync"],["Saviga","Monster 77"],["Saviga","Superspeed 777"],["Saviga","Super Block"],["Saviga","Super Long"],["Saviga","Mega Pimples"],["Schildkröt","Jade"],["Schildkröt","Elite"],["Schildkröt","Prestige"],["Schildkröt","Avantgarde"],["Schildkröt","Champion"],["Schildkröt","Spinmax"],["Schildkröt","Energy"],["Schildkröt","Revolution"],["Skitt","Aconda"],["Skitt","Uno"],["Skitt","Aconda Power"],["Soulspin","Project Sixteen"],["Soulspin","Project Sixteen ST"],["Soulspin","Project Twentyfour(P24)"],["Spinlab","Vortex"],["Spinlab","Vortex 2"],["Spinlab","Caronte"],["Spinlab","Lochness"],["Spinlord","Marder"],["Spinlord","Tiger"],["Spinlord","Adler"],["Spinlord","Zeitgeist"],["Spinlord","Stachelfeuer"],["Spinlord","Dornenglanz"],["Spinlord","Irbis"],["Spinlord","Blitzschlag"],["Spinlord","Degu"],["Spinlord","Feuerstich"],["Spinlord","Waran"],["Spinlord","Sternenfall"],["Spinlord","Agenda"],["Spinlord","Keiler"],["Spinlord","Dornenglanz II"],["Spinlord","Gipfelsturm"],["Spinlord","Sandwind"],["Spinlord","Ozelot"],["Spinlord","Strahlkraft"],["Spinlord","Tanuki"],["Spinlord","Gigant"],["Spinlord","ORKan"],["Spinlord","Wyvern"],["Spinlord","Leviathan"],["Spinlord","Quokka"],["Spinlord","Nashorn"],["Spinlord","Dornenglanz III"],["Spinlord","Minotaur"],["Spinlord","Gepard"],["Spinlord","Hai"],["Spinlord","Greif"],["Spinlord","Mantikor"],["Spinlord","Dornenglanz X"],["Spinlord","Hydra X"],["Spinzone","Enginity"],["Starwood","Alfa 3","Jun 30, 2026"],["Starwood","Naruwan","Jun 30, 2026"],["Stiga","Calibra LT"],["Stiga","Calibra LTSound"],["Stiga","Power LT"],["Stiga","S"],["Stiga","S1"],["Stiga","S2"],["Stiga","S3"],["Stiga","S4"],["Stiga","S5"],["Stiga","Mantra S"],["Stiga","Mantra M"],["Stiga","Mantra H"],["Stiga","Vertical 20"],["Stiga","Vertical 55"],["Stiga","Horizontal 20"],["Stiga","Horizontal 55"],["Stiga","Magnify LB"],["Stiga","Asteria S"],["Stiga","Symmetry"],["Stiga","Star"],["Stiga","Star*"],["Stiga","Star**"],["Stiga","Star***"],["Stiga","Star****"],["Stiga","Star*****"],["Stiga","DNAPro S"],["Stiga","DNAPro M"],["Stiga","DNAPro H"],["Stiga","DNAFuture M"],["Stiga","DNAPlatinum S"],["Stiga","DNAPlatinum M"],["Stiga","DNAPlatinum H"],["Stiga","DNAPlatinum XH"],["Stiga","DNADragon Grip"],["Stiga","Mantra Pro M"],["Stiga","Mantra Pro H"],["Stiga","DNAAdvance","Jun 30, 2026"],["Stiga","Truls Möregårdh***"],["Stiga","Star Club"],["Stiga","Mantra Pro XH"],["Stiga","DNAHybrid M"],["Stiga","DNAHybrid H"],["Stiga","DNAHybrid XH"],["Stiga","Mantra Control M"],["Stiga","Eco Future"],["Stiga","Mantra Sound S"],["Stiga","DNADragon Power 52.5"],["Stiga","DNADragon Power 55"],["Stiga","DNADragon Power 57.5"],["Stiga","ST.Large"],["Stiga","Star Advance"],["Stiga","Star Future"],["Stiga","Helix Platinum M"],["Stiga","Helix Platinum H"],["Stiga","Helix Platinum XH"],["Stiga","Helix Platinum 55"],["Stiga","DNAHybrid Sponge 55"],["Stiga","Helix Hybrid Sponge M"],["Stiga","Helix Hybrid Sponge H"],["Stiga","Helix Hybrid Sponge XH"],["Stiga","Helix Hybrid Sponge 55"],["Stiga","Chop&Drive"],["Stiga","Clippa"],["Stiga","Evo","Jun 30, 2026"],["Stiga","Innova Ultra Light"],["Stiga","Mendo Energy","Jun 30, 2026"],["Stiga","Royal","Jun 30, 2026"],["Suke","Phgntom","Jun 30, 2026"],["Sunflex","Expert Xonox"],["Sunflex","Expert Zeno"],["Sunflex","Anti Loop"],["Sunflex","Ice Breaker"],["Sunflex","Samurai"],["Sunflex","Mandarin"],["Sunflex","Taipan"],["Sunflex","Shogun"],["Sunflex","Mikado"],["Sunflex","Mogul"],["Sunflex","Sun-Power"],["Sunflex","Sun-Control"],["Sunflex","AF50"],["Sunflex","BZ60"],["Sunflex","Dr.Freeze"],["Sunflex","Zenith"],["Sunflex","Splinter"],["Sunflex","Kronos"],["Sunflex","Braxie"],["Sunflex","Agile"],["Super Kaiser","Ninja 300"],["Super Kaiser","Boxer"],["Super Kaiser","Soft G12"],["Super Kaiser","Soft G61"],["Super Kaiser","Soft G63"],["Super Kaiser","Dust Leopard"],["Sword","Break"],["Sword","Maze"],["Sword","Paladin II"],["Sword","Long Can"],["Sword","Dance"],["Sword","Zeus"],["Sword","Ares"],["Sword","Venom"],["Sword","Remix"],["Sword","Scylla III"],["Sword","King"],["Sword","RG"],["Sword","2000-F"],["Sword","Hero"],["Tagro","Chimera"],["Tagro","Victor LB-1"],["Tagro","Victor LB-2"],["Takunin","Alita"],["The World Connect","Speed Star"],["The World Connect","Spin Star"],["Tibhar","Sinus"],["Tibhar","Genius"],["Tibhar","Aurus"],["Tibhar","Genius+"],["Tibhar","Evolution FX-P"],["Tibhar","Evolution MX-P"],["Tibhar","Grip-SEurope","Jun 30, 2026"],["Tibhar","1Q","Jun 30, 2026"],["Tibhar","Evolution EL-P"],["Tibhar","Evolution MX-S"],["Tibhar","5Q+"],["Tibhar","Volcano+"],["Tibhar","Quantum"],["Tibhar","Nimbus"],["Tibhar","Hybrid K-1"],["Tibhar","Crazy Bull"],["Tibhar","Evolution EL-S"],["Tibhar","Evolution FX-S"],["Tibhar","Beluga"],["Tibhar","Tacky Power"],["Tibhar","Aurus Prime"],["Tibhar","Aurus Select"],["Tibhar","Quantum X"],["Tibhar","Speedy Soft XD"],["Tibhar","Hybrid K1 Pro"],["Tibhar","Hybrid K2"],["Tibhar","Speedster"],["Tibhar","Space"],["Tibhar","MX-K"],["Tibhar","Speedy Soft D.Tec SXD"],["Tibhar","Quantum XPro"],["Tibhar","Hybrid K1J"],["Tibhar","Game"],["Tibhar","Evolution MX-D"],["Tibhar","Infinity MX-P"],["Tibhar","Infinity MX-S"],["Tibhar","Lightning"],["Tibhar","Lava"],["Tibhar","Hybrid K3"],["Tibhar","Play"],["Tibhar","Hybrid K2 Pro"],["Tibhar","Evolution EL-D"],["Tibhar","Evolution FX-D"],["Tibhar","Hybrid MK"],["Tibhar","Speedy Soft My"],["Tibhar","Dang","Jun 30, 2026"],["Tibhar","Ellen"],["Tibhar","Extra Long","Jun 30, 2026"],["Tibhar","Grass"],["Tibhar","Grass D.Tec S"],["Tibhar","Learn Spin"],["Tibhar","Legend"],["Tibhar","Norm"],["Tibhar","Phantom"],["Tibhar","Rapid"],["Tibhar","Rapid D.Tec S"],["Tibhar","Rapid Soft"],["Tibhar","Speedy Soft"],["Tibhar","Speedy Soft D.Tec S"],["Tibhar","Speedy Spin"],["Tibhar","Super Defense 40"],["Tibhar","Vari Spin"],["Tibhar","Vari Spin D.Tec S"],["Tmount KTS","Hyve"],["Tmount KTS","Platz"],["Tmount KTS","Paax","Jun 30, 2026"],["Tmount KTS","Thar","Jun 30, 2026"],["Tmount KTS","Zenon","Jun 30, 2026"],["Tmount KTS","Topspin"],["Tmount KTS","Master V"],["Tmount KTS","Master V47 Pro"],["Tmount KTS","Master V49 Pro"],["Tmount KTS","Master S47"],["Tmount KTS","Master P49"],["Tmount KTS","Master G52"],["TSP","Curl P-H"],["TSP","Grandy","Jun 30, 2026"],["TSP","Agrit"],["TSP","Agrit Speed"],["TSP","Rise"],["TSP","Rise Speed"],["TSP","Curl P-4"],["TSP","Spin Magic","Jun 30, 2026"],["TSP","Ventus Speed"],["TSP","Ventus Spin"],["TSP","Ventus Soft","Jun 30, 2026"],["TSP","Regalis Red"],["TSP","Regalis Blue"],["TSP","Spectol Red"],["TSP","Spectol Blue"],["TSP","Spinpips Red"],["TSP","Spinpips Blue"],["TSP","Gambit","Jun 30, 2026"],["TSP","Ventus Basic","Jun 30, 2026"],["TSP","Super Ventus"],["TSP","730","Jun 30, 2026"],["TSP","Curl P-1R"],["TSP","Curl P-2"],["TSP","Curl P-3"],["TSP","Curl P-3a R"],["TSP","Giant","Jun 30, 2026"],["TSP","LCatcher","Jun 30, 2026"],["TSP","Milli Tall II","Jun 30, 2026"],["TSP","Spectol"],["TSP","Summit","Jun 30, 2026"],["TSP","Super Spinpips"],["TSP","Tarbit"],["TSP","T-Rex","Jun 30, 2026"],["TSP","Triple","Jun 30, 2026"],["TSP","UQ","Jun 30, 2026"],["TSP","X's","Jun 30, 2026"],["TSP","X's F-1","Jun 30, 2026"],["TTS","Master Pro Model"],["TTS","Solis 500"],["TTS","Aramith G10"],["TTS","Synergy"],["Tulpe","Heart-K"],["Tulpe","Club-Q"],["Tulpe","Diamond-J"],["Tulpe","Lock"],["Tuttle","Beijing"],["Tuttle","World No.1"],["Tuttle","LV"],["Tuttle","888"],["Tuttle","Spring-3B"],["Tuttle","Summer-3C"],["Tuttle","Autumn-3D"],["Tuttle","Winter-3E"],["Tuttle","Prevention Arc"],["Tuttle","A380 Sky"],["Tuttle","2013 Positive Energy"],["Tuttle","2015 Good"],["Tuttle","2018VIP"],["Tuttle","55A"],["Tuttle","66B"],["Tuttle","South Pole"],["Tuttle","North Pole"],["Tuttle","President G20"],["Tuttle","Tmax G-28"],["Tuttle","Tmax Energy"],["Tuttle","Tmax World"],["Tuttle","Tmax Sky"],["Tuttle","Yudoloopx"],["Tuttle","Huieson 618"],["Tuttle","Gns"],["Unrex","Lumen I"],["V3 Tec","Spin Attack X3"],["V3 Tec","Fast Control S1"],["V3 Tec","Power Drive Y5"],["Victas","VO>101"],["Victas","VLB>301"],["Victas","VS>401"],["Victas","VO>102"],["Victas","V>01"],["Victas","V>01 Limber"],["Victas","V>01 Stiff"],["Victas","VS>402 Limber"],["Victas","VS>402 Double Extra"],["Victas","V>15 Extra"],["Victas","V>15 Limber"],["Victas","V>15 Stiff"],["Victas","VO>103"],["Victas","VJ>07 Regular"],["Victas","VJ>07 Limber"],["Victas","VJ>07 Stiff"],["Victas","VJC>07 Sticky Extra"],["Victas","V>11"],["Victas","V>03"],["Victas","Ventus Regular"],["Victas","Ventus Limber"],["Victas","Ventus Stiff"],["Victas","Ventus Extra"],["Victas","TRIPLERegular"],["Victas","TRIPLEExtra"],["Victas","TRIPLEDouble Extra"],["Victas","X's Regular"],["Victas","Spectol S1"],["Victas","Spectol S2"],["Victas","Spectol S3"],["Victas","Spinpips D1"],["Victas","Spinpips D2"],["Victas","Spinpips D3"],["Victas","Curl P1V"],["Victas","Curl P2V"],["Victas","Curl P3V"],["Victas","Curl P3 Alpha V"],["Victas","Curl P4V"],["Victas","Curl P5V"],["Victas","Giant-V"],["Victas","VLarge L1"],["Victas","VLarge L2"],["Victas","VLarge L3"],["Victas","V>15 Sticky"],["Victas","V>20 Double Extra"],["Victas","V>22 Double Extra"],["Victas","Ventus Regulara"],["Victas","VJNext"],["Victas","V>20 Extra"],["Victas","Swat Spin"],["Victas","V>15 Stickysoft"],["Victas","Swat PWSpin"],["Victas","Xegna"],["Victas","Xegna Spin"],["Vista","Axio-M"],["Vista","Axio-S"],["Vollo","Impulse***"],["Wdir","Werdiel III"],["Wdir","Werdiel Blue"],["Wdir","Werdiel 8"],["Winion","Initial"],["Winion","Advance Selected"],["Winion","Initial Spin"],["Winion","Initial Speed"],["Winion","Initial Pro"],["Winion","Advance Spin"],["Winion","Advance Speed"],["Winion","Advance Pro"],["Winion","Vertexbasic"],["Winion","Vertex Spin"],["Winion","Vertex Speed"],["Winion","Vertex Pro"],["Winion","Zeto Spin"],["Winion","Zeto Basic"],["Winion","Zeto Speed"],["Winning","Mad X"],["Winning","NPLong"],["Winning","NP-Grass"],["Winning","G-Wave"],["Winning","Friendship 729 Super TSS"],["Winning","King Power Komann"],["Winning","NP-1"],["Winning","NP-2"],["Winning","NP-6"],["Winning","NP-8"],["Xiom","Zeta"],["Xiom","Sigma III"],["Xiom","Vega Europe"],["Xiom","Vega Asia"],["Xiom","Vega Pro"],["Xiom","Vega Elite"],["Xiom","Tau II"],["Xiom","Omega IVPro"],["Xiom","Omega IVAsia"],["Xiom","Omega IVEurope"],["Xiom","Omega IVElite"],["Xiom","Vega China VM"],["Xiom","Omega II"],["Xiom","Omega III"],["Xiom","Sigma IIEurope"],["Xiom","Musa I"],["Xiom","Vega Japan"],["Xiom","Sigma IIPro"],["Xiom","Omega VTour"],["Xiom","Omega VPro"],["Xiom","Vega SPO"],["Xiom","MUV°Prospin"],["Xiom","MUV°Eurospin"],["Xiom","MUV°Hyspin"],["Xiom","MUV°Vspin"],["Xiom","Omega VAsia"],["Xiom","Omega VEurope"],["Xiom","Musa III"],["Xiom","Vega LPO"],["Xiom","Vega DEF"],["Xiom","Omega IIx","Jun 30, 2026"],["Xiom","Vega Europe DF"],["Xiom","Vega Asia DF"],["Xiom","Omega VElite"],["Xiom","Vega Intro"],["Xiom","Omega VIIPro"],["Xiom","Omega VIIEurope"],["Xiom","Omega VIIAsia"],["Xiom","Omega VIITour"],["Xiom","Vega Tour"],["Xiom","Oza","Jun 30, 2026"],["Xiom","Omega VIIHyper"],["Xiom","Vega X"],["Xiom","Omega VIIChina Guang"],["Xiom","Omega VIIChina Ying"],["Xiom","Sigma IV"],["Xiom","Sigma V"],["Xiom","Zeta China"],["Xiom","Jekyll&Hyde H52.5"],["Xiom","Jekyll&Hyde X50.0"],["Xiom","Jekyll&Hyde X47.5"],["Xiom","Jekyll&Hyde V52.5"],["Xiom","Jekyll&Hyde V47.5"],["Xiom","Jekyll&Hyde Z52.5"],["Xiom","Omega IIIPro"],["Xiom","Vega Korea"],["Xiom","Jekyll&Hyde C55"],["Xiom","Vega HPro"],["Xiom","Vega HAsia"],["Xiom","Vega HEuro"],["Xiom","Omega IIPro"],["Xiom","Omega IIIEuro"],["Xiom","Tau III"],["Xiom","Jekyll&Hyde C52.5"],["Xiom","Jekyll&Hyde C57.5"],["Xiom","Omega VIIIPro"],["Xiom","Vega China+"],["Xiom","Omega VIIIEuro"],["Xiom","Omega VIIIHybrid"],["Xiom","Omega VIIIChina"],["Xiom","Omega IIKorea"],["Xiom","Vega OSoft Europe"],["Xiom","Vega OMid Euro Asia"],["Xiom","Vega OHard Asia"],["Xiom","Tau 55.5 Soft"],["Xiom","Tau 57.5 Hard"],["Xiom","Tau 60.5XHard"],["Xiom","Next Elite"],["Xiom","Next Intro"],["Xuperman","Powerplay-X"],["Xuperman","Power Speed"],["Xushaofa","999LSZ"],["Xushaofa","999ZCD"],["Yantianming","Yanyang-05"],["Yantianming","Dawn-III."],["Yasaka","Pryde 30","Jun 30, 2026"],["Yasaka","Xtend LB"],["Yasaka","Rakza 7"],["Yasaka","Rakza 9"],["Yasaka","Rakza 7 Soft"],["Yasaka","Mark VHPS"],["Yasaka","Mark VHPSSoft"],["Yasaka","Rakza PO"],["Yasaka","Xtend SD"],["Yasaka","Spinate"],["Yasaka","Rakza X"],["Yasaka","Rakza XSoft"],["Yasaka","Shining Dragon","Jun 30, 2026"],["Yasaka","Rigan"],["Yasaka","Rigan Spin"],["Yasaka","Thunder Dragon"],["Yasaka","Hovering Dragon"],["Yasaka","Psych Dragon"],["Yasaka","Bold Dragon"],["Yasaka","Rakza Z"],["Yasaka","Crestar","Jun 30, 2026"],["Yasaka","Trick Anti"],["Yasaka","Rakza XX"],["Yasaka","Elfrark RF"],["Yasaka","Braboss","Jun 30, 2026"],["Yasaka","Rising Dragon II"],["Yasaka","Shining Dragon II"],["Yasaka","Original LB"],["Yasaka","Anti Power"],["Yasaka","A-1-2A-1"],["Yasaka","A-1-2A-2"],["Yasaka","Cobalta"],["Yasaka","Cobalt X1"],["Yasaka","Cobalt X2"],["Yasaka","Mark V"],["Yasaka","Mark VAD"],["Yasaka","Mark VGPS"],["Yasaka","Mark VM2"],["Yasaka","Mark VXS"],["Yasaka","Original Soft"],["Yasaka","Original"],["Yasaka","Original A-1"],["Yasaka","Original A-2"],["Yasaka","Original Extra"],["Yasaka","Phantom 007"],["Yasaka","Phantom 008"],["Yasaka","Phantom 009"],["Yasaka","Phantom 0011~"],["Yasaka","Phantom 0012~"],["Yasaka","Top 12"],["Yasaka","Vision"],["Yasaka","Wallie"],["Yasaka","Xtend"],["Yasaka","Xtend HS"],["Yashima","Competition XR3000"],["Yashima","Upper Spincompetition XR7"],["Yashima","XX3"],["Yashima","XX5"],["Young Shine","Dingtian"],["Young Shine","Zhenhai"],["Young Shine","Handi"],["Yuanjian","Zhantian"],["Yuanjian","Suixing"],["Yuanyixing TT","Kuangyuan"],["Yuanyixing TT","Da"],["Yuanyixing TT","Chiyan"],["Yuanyixing TT","Ziteng"],["Yuanyixing TT","Pili"],["YZJ/Yingzhijie","Taisho"],["YZJ/Yingzhijie","Deas"],["YZJ/Yingzhijie","Masterpiece"],["Zhuo Long","Deterrent Power"],["Zhuo Long","Deterrent Speed"],["Zhuo Long","Deterrent Spin"],["Zhuo Long","Deterrent Long"]];
+(function(){
+  var q=document.getElementById('larcQ'),out=document.getElementById('larcOut');
+  function nrm(x){return x.toLowerCase().replace(/[^a-z0-9]/g,'');}
+  function esc(x){return x.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  q.addEventListener('input',function(){
+    var v=nrm(q.value);
+    if(v.length<3){out.innerHTML='';return;}
+    var hits=[];
+    for(var i=0;i<LARC.length&&hits.length<8;i++){
+      var nb=nrm(LARC[i][0]),np=nrm(LARC[i][1]);
+      if(np.indexOf(v)>-1||nb.indexOf(v)>-1||(nb+np).indexOf(v)>-1)hits.push(LARC[i]);
+    }
+    if(!hits.length){
+      out.innerHTML='<div style="border:1px solid rgba(255,49,62,.4);background:rgba(255,49,62,.07);border-radius:12px;padding:11px 13px;font-size:13.5px;line-height:1.5;">'+
+        '<b style="color:var(--red);">Not on the current ITTF list.</b> Check the spelling exactly as printed on the rubber. If it&rsquo;s truly not listed, it&rsquo;s not legal for sanctioned play &mdash; delisted older sheets included.</div>';
+      return;
+    }
+    out.innerHTML=hits.map(function(h){
+      var expiring=h.length>2;
+      var badge=expiring
+        ?'<span class="age mid" style="margin-left:auto;">until '+esc(h[2])+'</span>'
+        :'<span class="age ok" style="margin-left:auto;">✓ authorized</span>';
+      return '<div style="display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--edge-soft);border-radius:12px;padding:10px 12px;font-size:13.5px;">'+
+        '<span><b>'+esc(h[1])+'</b> <span style="color:var(--slate-dim);">· '+esc(h[0])+'</span></span>'+badge+'</div>';
+    }).join('');
+  });
+})();
+</script>
+</body>
+</html>
